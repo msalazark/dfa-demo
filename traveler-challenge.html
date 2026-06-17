@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Traveler Challenge · DFA JFK T1</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#050D1A;font-family:'Georgia',serif;color:#F0EBE2;min-height:100vh;}
+.back{display:block;padding:12px 20px;font-size:11px;color:#555;text-decoration:none;letter-spacing:0.06em;border-bottom:0.5px solid #0F2040;}
+.back:hover{color:#378ADD;}
+.wrap{max-width:620px;margin:0 auto;padding:32px 24px;}
+.hdr{padding-bottom:20px;border-bottom:0.5px solid #0F2040;margin-bottom:28px;}
+.hdr p{font-size:10px;letter-spacing:0.12em;color:#378ADD;margin-bottom:6px;}
+.hdr h1{font-size:26px;font-weight:400;margin-bottom:4px;}
+.hdr small{font-size:11px;color:#4A6A8A;}
+.screen{display:none;}.screen.active{display:block;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px;}
+.stat{background:#0A1628;border-radius:8px;padding:14px;text-align:center;}
+.stat-n{font-size:22px;font-weight:400;color:#378ADD;}
+.stat-l{font-size:10px;color:#4A6A8A;margin-top:2px;letter-spacing:0.06em;}
+.btn{background:#378ADD;color:#F0EBE2;border:none;border-radius:8px;padding:12px 24px;font-size:13px;cursor:pointer;width:100%;font-family:'Georgia',serif;}
+.btn-outline{background:transparent;border:0.5px solid #378ADD;color:#85B7EB;}
+.prog{display:flex;gap:4px;margin-bottom:16px;}
+.dot{height:3px;flex:1;border-radius:2px;background:#0F2040;}
+.dot.done{background:#378ADD;}.dot.cur{background:#85B7EB;}
+.score-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.pts{font-size:13px;font-weight:500;color:#378ADD;}
+.timer-bar{height:3px;background:#0F2040;border-radius:2px;margin-bottom:16px;overflow:hidden;}
+.timer-fill{height:100%;background:#378ADD;border-radius:2px;transition:width 0.1s linear;}
+.qlbl{font-size:10px;letter-spacing:0.1em;color:#378ADD;margin-bottom:8px;}
+.q{font-size:15px;color:#F0EBE2;margin-bottom:18px;line-height:1.5;}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.opt{background:#0A1628;border:0.5px solid #0F2040;border-radius:8px;padding:12px 14px;cursor:pointer;font-size:13px;color:#F0EBE2;font-family:'Georgia',serif;text-align:left;transition:all 0.15s;}
+.opt:hover{border-color:#378ADD;}
+.opt.correct{border-color:#1D9E75;background:#0A2820;color:#5DCAA5;}
+.opt.wrong{border-color:#E24B4A;background:#280A0A;color:#F09595;}
+.opt.disabled{pointer-events:none;}
+.fb{font-size:11px;color:#4A6A8A;text-align:center;min-height:18px;}
+.reward{border-radius:10px;padding:24px;text-align:center;margin-bottom:14px;}
+.reward.gold{background:#1A1208;border:1px solid #C8A84B;}
+.reward.silver{background:#0F1820;border:1px solid #85B7EB;}
+.reward.bronze{background:#180E08;border:1px solid #D85A30;}
+.r-icon{font-size:40px;margin-bottom:10px;}
+.r-title{font-size:22px;font-weight:400;margin-bottom:4px;}
+.r-code{font-size:20px;font-weight:500;letter-spacing:0.15em;padding:10px 20px;border-radius:6px;display:inline-block;margin:10px 0;}
+.pop{animation:pop 0.3s ease}
+@keyframes pop{0%{transform:scale(0.95)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← Back to all concepts</a>
+<div class="wrap">
+  <div class="hdr">
+    <p>S I G N A T U R E   C O N C E P T   0 5</p>
+    <h1>The Traveler Challenge</h1>
+    <small>Multi-brand · All categories · Win exclusive rewards</small>
+  </div>
+
+  <div class="screen active" id="intro">
+    <p style="font-size:13px;color:#4A6A8A;line-height:1.7;margin-bottom:22px;">Answer 5 questions about travel, spirits, and luxury brands. The higher your score, the better your exclusive reward redeemable at any DFA counter.</p>
+    <div class="stats">
+      <div class="stat"><p class="stat-n">5</p><p class="stat-l">QUESTIONS</p></div>
+      <div class="stat"><p class="stat-n" style="color:#C8A84B;">10s</p><p class="stat-l">PER QUESTION</p></div>
+      <div class="stat"><p class="stat-n" style="color:#1D9E75;">3</p><p class="stat-l">REWARD TIERS</p></div>
+    </div>
+    <button class="btn" onclick="startGame()">Start Challenge →</button>
+  </div>
+
+  <div class="screen" id="game">
+    <div class="score-row">
+      <div class="prog" id="prog"></div>
+      <span class="pts" id="pts">0 pts</span>
+    </div>
+    <div class="timer-bar"><div class="timer-fill" id="timer" style="width:100%"></div></div>
+    <p class="qlbl" id="qlbl">QUESTION 1 OF 5</p>
+    <p class="q" id="q"></p>
+    <div class="opts" id="opts"></div>
+    <p class="fb" id="fb"></p>
+  </div>
+
+  <div class="screen" id="end">
+    <div id="reward-box"></div>
+  </div>
+</div>
+<script>
+const questions=[
+  {q:"Which Japanese whisky brand is globally renowned for its meticulous blending heritage?",opts:["Hibiki","Johnnie Walker","Laphroaig","Macallan"],ans:0,pts:200},
+  {q:"Cognac must be produced in which region of France to legally carry its name?",opts:["Bordeaux","Burgundy","Cognac","Champagne"],ans:2,pts:200},
+  {q:"What does 'Travel Retail Exclusive' mean for a spirit bottle?",opts:["Cheaper than local stores","Only sold at airports & duty free","Available online only","A limited vintage release"],ans:1,pts:200},
+  {q:"The Dior fragrance Sauvage draws inspiration from which landscape?",opts:["The French Riviera","The Sahara Desert","The Alps","The Normandy coast"],ans:1,pts:200},
+  {q:"Which spirit is the primary ingredient in a classic Moscow Mule?",opts:["Gin","Rum","Tequila","Vodka"],ans:3,pts:200},
+];
+let qIdx=0,score=0,answered=false,timer=null,timeLeft=10;
+
+function startGame(){
+  qIdx=0;score=0;answered=false;
+  document.getElementById('pts').textContent='0 pts';
+  ['intro','end'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('game').classList.add('active');
+  showQ();
+}
+
+function buildProg(){
+  const p=document.getElementById('prog'); p.innerHTML='';
+  questions.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i<qIdx?' done':i===qIdx?' cur':'');
+    p.appendChild(d);
+  });
+}
+
+function showQ(){
+  answered=false; timeLeft=10; buildProg();
+  const q=questions[qIdx];
+  document.getElementById('qlbl').textContent=`QUESTION ${qIdx+1} OF ${questions.length}`;
+  document.getElementById('q').textContent=q.q;
+  document.getElementById('fb').textContent='';
+  const opts=document.getElementById('opts'); opts.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=opt;
+    b.onclick=()=>answer(i,b);
+    opts.appendChild(b);
+  });
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(timer);
+  const fill=document.getElementById('timer');
+  fill.style.transition='none'; fill.style.width='100%';
+  setTimeout(()=>{
+    fill.style.transition='width 0.1s linear';
+    timer=setInterval(()=>{
+      timeLeft-=0.1;
+      fill.style.width=Math.max(0,timeLeft/10*100)+'%';
+      if(timeLeft<=0){clearInterval(timer);if(!answered)answer(-1,null);}
+    },100);
+  },50);
+}
+
+function answer(idx,btn){
+  if(answered)return; answered=true; clearInterval(timer);
+  const q=questions[qIdx];
+  document.querySelectorAll('.opt').forEach(b=>b.classList.add('disabled'));
+  document.querySelectorAll('.opt')[q.ans].classList.add('correct');
+  if(idx===q.ans){
+    const bonus=Math.round(timeLeft/10*q.pts);
+    score+=bonus;
+    document.getElementById('pts').textContent=score+' pts';
+    document.getElementById('fb').textContent=`+${bonus} pts — Correct!`;
+    if(btn)btn.classList.add('correct');
+  } else {
+    document.getElementById('fb').textContent='Not quite — the correct answer is highlighted.';
+    if(btn)btn.classList.add('wrong');
+  }
+  setTimeout(()=>{qIdx++;qIdx<questions.length?showQ():endGame();},1400);
+}
+
+function endGame(){
+  document.getElementById('game').classList.remove('active');
+  document.getElementById('end').classList.add('active');
+  const max=questions.length*200,pct=score/max;
+  let tier,code,disc,msg,cls,col,txtcol;
+  if(pct>=0.75){tier='Gold';code='DFA-GOLD';disc='15% off any purchase today';msg='Outstanding! You\'ve unlocked our premium reward.';cls='gold';col='#C8A84B';txtcol='#412402';}
+  else if(pct>=0.45){tier='Silver';code='DFA-SLVR';disc='10% off spirits & fragrances';msg='Well played! A solid reward awaits at the register.';cls='silver';col='#85B7EB';txtcol='#042C53';}
+  else{tier='Bronze';code='DFA-BRNZ';disc='Complimentary sampling experience';msg='Good effort! Claim your reward at any DFA counter.';cls='bronze';col='#D85A30';txtcol='#4A1B0C';}
+  const icons={gold:'🏆',silver:'🥈',bronze:'🥉'};
+  document.getElementById('reward-box').innerHTML=`
+    <div class="reward ${cls} pop">
+      <div class="r-icon">${icons[tier]}</div>
+      <p class="r-title">${tier} Traveler</p>
+      <p style="font-size:13px;color:${col};margin-bottom:10px;">${score} / ${max} points</p>
+      <p style="font-size:12px;color:#8A9AAA;line-height:1.6;margin-bottom:14px;">${msg}</p>
+      <p style="font-size:10px;color:#4A6A8A;letter-spacing:0.08em;margin-bottom:4px;">YOUR REWARD CODE</p>
+      <span class="r-code" style="background:${col};color:${txtcol};">${code}</span>
+      <p style="font-size:12px;color:#8A9AAA;margin-top:8px;">${disc}</p>
+      <p style="font-size:10px;color:#4A6A8A;margin-top:6px;">Redeem at any DFA register · Valid today only</p>
+    </div>
+    <button class="btn btn-outline" style="margin-top:4px;" onclick="startGame()">Play Again →</button>`;
+}
+</script>
+</body>
+</html>

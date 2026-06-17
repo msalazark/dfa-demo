@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Blend Your Journey · DFA JFK T1</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0D0A06;font-family:'Georgia',serif;color:#F0EBE2;min-height:100vh;}
+.back{display:block;padding:12px 20px;font-size:11px;color:#555;text-decoration:none;letter-spacing:0.06em;border-bottom:0.5px solid #1A1A1A;}
+.back:hover{color:#C8A84B;}
+.wrap{max-width:720px;margin:0 auto;padding:32px 24px;}
+.hdr{padding-bottom:20px;border-bottom:0.5px solid #2A1F08;margin-bottom:28px;}
+.hdr p{font-size:10px;letter-spacing:0.12em;color:#C8A84B;margin-bottom:6px;}
+.hdr h1{font-size:26px;font-weight:400;margin-bottom:4px;}
+.hdr small{font-size:11px;color:#555;}
+.prog{display:flex;gap:4px;margin-bottom:20px;}
+.prog span{height:2px;flex:1;background:#2A1F08;border-radius:2px;}
+.prog span.done{background:#C8A84B;}
+.lbl{font-size:10px;letter-spacing:0.1em;color:#C8A84B;margin:0 0 12px;display:block;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:20px;}
+.opt{background:#1A1208;border:0.5px solid #2A1F08;border-radius:8px;padding:14px;cursor:pointer;text-align:center;transition:all 0.15s;}
+.opt:hover{border-color:#C8A84B;}.opt.sel{border-color:#C8A84B;background:#2A1F08;}
+.opt-icon{font-size:20px;margin-bottom:6px;}.opt-t{font-size:13px;color:#F0EBE2;font-weight:500;}.opt-s{font-size:10px;color:#7A6A50;margin-top:2px;}
+.btn{background:#C8A84B;color:#0D0A06;border:none;border-radius:8px;padding:12px 24px;font-size:13px;cursor:pointer;width:100%;font-family:'Georgia',serif;font-weight:500;}
+.btn:disabled{opacity:0.35;cursor:not-allowed;}
+.btn-outline{background:transparent;border:0.5px solid #C8A84B;color:#C8A84B;}
+.step{display:none;}.step.active{display:block;}
+.card{background:#1A1208;border-radius:10px;padding:20px;margin-bottom:12px;}
+.spirit-name{font-size:22px;font-weight:400;margin:4px 0;}
+.spirit-house{font-size:11px;color:#C8A84B;letter-spacing:0.08em;}
+.bar-row{display:flex;align-items:center;gap:8px;margin:5px 0;}
+.bar-lbl{font-size:10px;color:#7A6A50;width:48px;text-align:right;}
+.bar-track{flex:1;height:4px;background:#2A1F08;border-radius:2px;overflow:hidden;}
+.bar-fill{height:100%;background:#C8A84B;border-radius:2px;}
+.rule{border:none;border-top:0.5px solid #2A1F08;margin:14px 0;}
+.offer{background:#C8A84B;border-radius:8px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;}
+.spin{animation:spin 1s linear infinite;display:inline-block;}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.fade{animation:fade 0.4s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← Back to all concepts</a>
+<div class="wrap">
+  <div class="hdr">
+    <p>S I G N A T U R E   C O N C E P T   0 4</p>
+    <h1>Blend Your Journey</h1>
+    <small>Johnnie Walker · Jack Daniel's · Beluga · Hennessy · Flor de Caña</small>
+  </div>
+  <div class="step active" id="s1">
+    <div class="prog"><span class="done"></span><span></span><span></span></div>
+    <span class="lbl">WHERE ARE YOU HEADED?</span>
+    <div class="grid" id="dest-g"></div>
+    <button class="btn" id="b1" disabled onclick="next(1)">Next →</button>
+  </div>
+  <div class="step" id="s2">
+    <div class="prog"><span class="done"></span><span class="done"></span><span></span></div>
+    <span class="lbl">HOW DO YOU TRAVEL?</span>
+    <div class="grid" id="style-g"></div>
+    <button class="btn" id="b2" disabled onclick="next(2)">Next →</button>
+  </div>
+  <div class="step" id="s3">
+    <div class="prog"><span class="done"></span><span class="done"></span><span class="done"></span></div>
+    <span class="lbl">YOUR PALATE</span>
+    <div class="grid" id="palate-g"></div>
+    <button class="btn" id="b3" disabled onclick="generate()">Blend My Journey →</button>
+  </div>
+  <div class="step" id="s4">
+    <div id="loading" style="text-align:center;padding:48px 0;">
+      <div class="spin" style="font-size:30px;color:#C8A84B;">⟳</div>
+      <p style="color:#7A6A50;font-size:13px;margin-top:14px;">Blending your perfect spirit...</p>
+    </div>
+    <div id="result" style="display:none;" class="fade"></div>
+  </div>
+</div>
+<script>
+const API="/.netlify/functions/claude";
+const dests=[{e:"⛩",l:"Tokyo",s:"Japan"},{e:"🗼",l:"Paris",s:"France"},{e:"👑",l:"London",s:"UK"},{e:"💎",l:"Dubai",s:"UAE"},{e:"🏖",l:"São Paulo",s:"Brazil"},{e:"🌮",l:"Mexico City",s:"Mexico"}];
+const styles=[{e:"💼",l:"Business",s:"Sharp & decisive"},{e:"🧭",l:"Explorer",s:"Curious & bold"},{e:"🛋",l:"Relaxed",s:"Easy & unhurried"},{e:"⭐",l:"Celebratory",s:"This is a big trip"}];
+const palates=[{e:"🔥",l:"Smoky",s:"Peated, complex"},{e:"💧",l:"Smooth",s:"Soft, elegant"},{e:"🍯",l:"Sweet",s:"Honey, caramel"},{e:"⚡",l:"Bold",s:"Full-bodied, rich"}];
+let bDest="",bStyle="",bPalate="";
+
+function mkGrid(items,id,setter,btnId){
+  const g=document.getElementById(id);
+  items.forEach(item=>{
+    const d=document.createElement('div'); d.className='opt';
+    d.innerHTML=`<div class="opt-icon">${item.e}</div><p class="opt-t">${item.l}</p><p class="opt-s">${item.s}</p>`;
+    d.onclick=()=>{document.querySelectorAll(`#${id} .opt`).forEach(x=>x.classList.remove('sel'));d.classList.add('sel');setter(item.l);document.getElementById(btnId).disabled=false;};
+    g.appendChild(d);
+  });
+}
+mkGrid(dests,'dest-g',v=>bDest=v,'b1');
+mkGrid(styles,'style-g',v=>bStyle=v,'b2');
+mkGrid(palates,'palate-g',v=>bPalate=v,'b3');
+
+function next(step){document.getElementById('s'+step).classList.remove('active');document.getElementById('s'+(step+1)).classList.add('active');}
+
+async function generate(){
+  next(3);
+  document.getElementById('loading').style.display='block';
+  document.getElementById('result').style.display='none';
+  try{
+    const res=await fetch(API,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        max_tokens:800,
+        system:`You power Blend Your Journey at JFK T1 DFA. Respond ONLY with valid JSON, no markdown: {spirit:string, brand:string (Johnnie Walker/Jack Daniel's/Beluga/Hennessy/Flor de Caña/Botran), category:string, smoky:number 1-10, smooth:number 1-10, sweet:number 1-10, bold:number 1-10, story:string (2 sentences), pairing:string, offer:string (TR exclusive), toast:string (in destination language + English translation)}`,
+        messages:[{role:"user",content:`Destination:${bDest}. Style:${bStyle}. Palate:${bPalate}.`}]
+      })
+    });
+    const data=await res.json();
+    const c=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    document.getElementById('loading').style.display='none';
+    const r=document.getElementById('result'); r.style.display='block';
+    const bar=(v)=>`<div class="bar-fill" style="width:${Math.round(v*10)}%"></div>`;
+    r.innerHTML=`
+      <div class="card">
+        <p class="spirit-house">${c.brand} · ${c.category}</p>
+        <p class="spirit-name">${c.spirit}</p>
+        <div style="margin:14px 0 10px;">
+          <div class="bar-row"><span class="bar-lbl">Smoky</span><div class="bar-track">${bar(c.smoky)}</div><span style="font-size:10px;color:#C8A84B;width:18px;">${c.smoky}</span></div>
+          <div class="bar-row"><span class="bar-lbl">Smooth</span><div class="bar-track">${bar(c.smooth)}</div><span style="font-size:10px;color:#C8A84B;width:18px;">${c.smooth}</span></div>
+          <div class="bar-row"><span class="bar-lbl">Sweet</span><div class="bar-track">${bar(c.sweet)}</div><span style="font-size:10px;color:#C8A84B;width:18px;">${c.sweet}</span></div>
+          <div class="bar-row"><span class="bar-lbl">Bold</span><div class="bar-track">${bar(c.bold)}</div><span style="font-size:10px;color:#C8A84B;width:18px;">${c.bold}</span></div>
+        </div>
+        <div class="rule"></div>
+        <p style="font-size:12px;color:#C5B080;font-style:italic;line-height:1.65;margin-bottom:8px;">${c.story}</p>
+        <p style="font-size:11px;color:#7A6A50;">🍽 ${c.pairing}</p>
+      </div>
+      <div class="offer">
+        <div>
+          <p style="font-size:10px;color:#5A4A20;letter-spacing:0.06em;margin-bottom:4px;">TRAVEL RETAIL EXCLUSIVE</p>
+          <p style="font-size:13px;font-weight:500;color:#0D0A06;margin-bottom:4px;">${c.offer}</p>
+          <p style="font-size:11px;color:#5A4A20;font-style:italic;">"${c.toast}"</p>
+        </div>
+      </div>
+      <button class="btn btn-outline" style="margin-top:12px;" onclick="restart()">← Try a different blend</button>`;
+  }catch(e){document.getElementById('loading').innerHTML='<p style="color:#555;text-align:center;">Connection error. Try again.</p>';}
+}
+
+function restart(){
+  bDest='';bStyle='';bPalate='';
+  document.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+  ['b1','b2','b3'].forEach(id=>document.getElementById(id).disabled=true);
+  ['s1','s2','s3','s4'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('s1').classList.add('active');
+  document.getElementById('loading').style.display='block';
+  document.getElementById('result').style.display='none';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Scent Journey · DFA JFK T1</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0F0A14;font-family:'Georgia',serif;color:#F0EBE2;min-height:100vh;}
+.back{display:block;padding:12px 20px;font-size:11px;color:#555;text-decoration:none;letter-spacing:0.06em;border-bottom:0.5px solid #1A1A1A;}
+.back:hover{color:#9B6DB5;}
+.wrap{max-width:720px;margin:0 auto;padding:32px 24px;}
+.hdr{padding-bottom:20px;border-bottom:0.5px solid #2A1A3A;margin-bottom:28px;}
+.hdr p{font-size:10px;letter-spacing:0.12em;color:#9B6DB5;margin-bottom:6px;}
+.hdr h1{font-size:26px;font-weight:400;margin-bottom:4px;}
+.hdr small{font-size:11px;color:#555;}
+.lbl{font-size:10px;letter-spacing:0.1em;color:#9B6DB5;margin:0 0 12px;display:block;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:20px;}
+.opt{background:#1A1025;border:0.5px solid #2A1A3A;border-radius:8px;padding:14px;cursor:pointer;text-align:center;transition:all 0.15s;}
+.opt:hover{border-color:#7B3FA0;}
+.opt.sel{border-color:#9B6DB5;background:#2A1040;}
+.opt-icon{font-size:20px;margin-bottom:6px;}
+.opt-t{font-size:13px;color:#F0EBE2;font-weight:500;}
+.opt-s{font-size:10px;color:#7A6A8A;margin-top:2px;}
+.btn{background:#7B3FA0;color:#F0EBE2;border:none;border-radius:8px;padding:12px 24px;font-size:13px;cursor:pointer;width:100%;margin-top:4px;font-family:'Georgia',serif;}
+.btn:disabled{opacity:0.35;cursor:not-allowed;}
+.btn-outline{background:transparent;border:0.5px solid #7B3FA0;color:#C5A0E0;}
+.step{display:none;}.step.active{display:block;}
+.card{background:#1A1025;border-radius:10px;padding:20px;margin-bottom:14px;}
+.frag-house{font-size:11px;color:#9B6DB5;letter-spacing:0.08em;margin-bottom:4px;}
+.frag-name{font-size:22px;font-weight:400;color:#F0EBE2;margin-bottom:10px;}
+.notes{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.note{background:#2A1040;color:#C5A0E0;font-size:11px;padding:4px 10px;border-radius:20px;}
+.rule{border:none;border-top:0.5px solid #2A1A3A;margin:14px 0;}
+.qr-box{background:#F0EBE2;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:14px;}
+.qr-sq{width:54px;height:54px;background:#0F0A14;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.spin{animation:spin 1s linear infinite;display:inline-block;}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.fade{animation:fade 0.4s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">← Back to all concepts</a>
+<div class="wrap">
+  <div class="hdr">
+    <p>S I G N A T U R E   C O N C E P T   0 3</p>
+    <h1>The Scent Journey</h1>
+    <small>Dior · Givenchy · Kenzo · Guerlain · JFK Terminal 1</small>
+  </div>
+
+  <div class="step active" id="s1">
+    <span class="lbl">STEP 1 OF 2 — YOUR DESTINATION</span>
+    <div class="grid" id="dest-grid"></div>
+    <button class="btn" id="b1" disabled onclick="next(1)">Continue →</button>
+  </div>
+
+  <div class="step" id="s2">
+    <span class="lbl">STEP 2 OF 2 — YOUR MOOD</span>
+    <div class="grid" id="mood-grid"></div>
+    <button class="btn" id="b2" disabled onclick="generate()">Discover My Scent →</button>
+  </div>
+
+  <div class="step" id="s3">
+    <div id="loading" style="text-align:center;padding:48px 0;">
+      <div class="spin" style="font-size:30px;color:#9B6DB5;">⟳</div>
+      <p style="color:#7A6A8A;font-size:13px;margin-top:14px;">Creating your scent profile...</p>
+    </div>
+    <div id="result" style="display:none;" class="fade"></div>
+  </div>
+</div>
+<script>
+const API = "/.netlify/functions/claude";
+const dests=[{e:"🗼",l:"Paris",s:"France"},{e:"⛩",l:"Tokyo",s:"Japan"},{e:"💎",l:"Dubai",s:"UAE"},{e:"☕",l:"Milan",s:"Italy"},{e:"⚓",l:"Sydney",s:"Australia"},{e:"🎵",l:"São Paulo",s:"Brazil"}];
+const moods=[{e:"❤",l:"Romantic",s:"For a special evening"},{e:"💼",l:"Confident",s:"Power & presence"},{e:"☀",l:"Fresh Start",s:"Light & energizing"},{e:"🎁",l:"Gift",s:"For someone special"}];
+let dest="",mood="";
+
+function makeGrid(items,id,setter,btnId){
+  const g=document.getElementById(id);
+  items.forEach(item=>{
+    const d=document.createElement('div');
+    d.className='opt';
+    d.innerHTML=`<div class="opt-icon">${item.e}</div><p class="opt-t">${item.l}</p><p class="opt-s">${item.s}</p>`;
+    d.onclick=()=>{
+      document.querySelectorAll(`#${id} .opt`).forEach(x=>x.classList.remove('sel'));
+      d.classList.add('sel'); setter(item.l);
+      document.getElementById(btnId).disabled=false;
+    };
+    g.appendChild(d);
+  });
+}
+makeGrid(dests,'dest-grid',v=>dest=v,'b1');
+makeGrid(moods,'mood-grid',v=>mood=v,'b2');
+
+function next(step){
+  document.getElementById('s'+step).classList.remove('active');
+  document.getElementById('s'+(step+1)).classList.add('active');
+}
+
+async function generate(){
+  next(2);
+  document.getElementById('loading').style.display='block';
+  document.getElementById('result').style.display='none';
+  try{
+    const res=await fetch(API,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        max_tokens:800,
+        system:`You are the AI powering The Scent Journey at JFK Terminal 1 Duty Free Americas. Generate a personalized luxury fragrance recommendation. Respond ONLY with valid JSON, no markdown: {fragrance: string, house: string (Dior/Givenchy/Kenzo/Guerlain), notes: array of 4 strings (max 2 words each), story: string (2 evocative sentences connecting destination+mood+fragrance), offer: string (exclusive TR offer), profile_name: string (3-word poetic name), travel_ritual: string (one sentence ritual suggestion)}`,
+        messages:[{role:"user",content:`Destination: ${dest}. Mood: ${mood}.`}]
+      })
+    });
+    const data=await res.json();
+    const c=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    document.getElementById('loading').style.display='none';
+    const r=document.getElementById('result');
+    r.style.display='block';
+    r.innerHTML=`
+      <div class="card">
+        <p class="frag-house">${c.house}</p>
+        <p class="frag-name">${c.fragrance}</p>
+        <div class="notes">${(c.notes||[]).map(n=>`<span class="note">${n}</span>`).join('')}</div>
+        <div class="rule"></div>
+        <p style="font-size:12px;color:#C5A0E0;font-style:italic;line-height:1.65;margin-bottom:10px;">${c.story}</p>
+        <p style="font-size:11px;color:#7A6A8A;line-height:1.5;">${c.travel_ritual}</p>
+      </div>
+      <div class="qr-box">
+        <div class="qr-sq">▣</div>
+        <div>
+          <p style="font-size:10px;color:#555;letter-spacing:0.08em;margin-bottom:2px;">SCENT PROFILE · ${(c.profile_name||'').toUpperCase()}</p>
+          <p style="font-size:13px;font-weight:500;color:#1A1025;margin-bottom:4px;">Scan to save & reorder</p>
+          <p style="font-size:11px;color:#7B3FA0;">${c.offer}</p>
+        </div>
+      </div>
+      <button class="btn btn-outline" style="margin-top:12px;" onclick="restart()">← Try another destination</button>`;
+  }catch(e){document.getElementById('loading').innerHTML='<p style="color:#555;text-align:center;">Connection error. Please try again.</p>';}
+}
+
+function restart(){
+  dest='';mood='';
+  document.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));
+  document.getElementById('b1').disabled=true;
+  document.getElementById('b2').disabled=true;
+  ['s1','s2','s3'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('s1').classList.add('active');
+  document.getElementById('loading').style.display='block';
+  document.getElementById('result').style.display='none';
+}
+</script>
+</body>
+</html>
