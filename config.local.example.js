@@ -1,0 +1,1 @@
+window.ANTHROPIC_KEY = "sk-ant-api03-YOUR_KEY_HERE";
