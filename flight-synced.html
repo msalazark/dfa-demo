@@ -64,7 +64,7 @@ body{background:#0A0A0A;font-family:'Georgia',serif;color:#F0EBE2;min-height:100
   </div>
 </div>
 <script>
-const ANTHROPIC_API_KEY = "YOUR_API_KEY_HERE";
+const ANTHROPIC_API_KEY = window.ANTHROPIC_KEY || "";
 
 const flights=[
   {code:"JL006",dest:"Tokyo",country:"Japan",time:"18:45",gate:"B12",airline:"Japan Airlines"},
