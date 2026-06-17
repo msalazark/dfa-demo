@@ -100,10 +100,16 @@ async function activate(flight,el){
   document.querySelectorAll('.flight').forEach(r=>r.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('screen').innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:380px;gap:12px;"><div class="spin" style="font-size:28px;">⟳</div><p style="color:#555;font-size:13px;">Syncing content for ${flight.dest}...</p></div>`;
+  const apiUrl = (typeof ANTHROPIC_API_KEY !== 'undefined' && ANTHROPIC_API_KEY)
+    ? "https://api.anthropic.com/v1/messages"
+    : "/.netlify/functions/claude";
+  const headers = apiUrl.includes("anthropic.com")
+    ? {"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"}
+    : {"Content-Type":"application/json"};
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
+    const res=await fetch(apiUrl,{
       method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      headers,
       body:JSON.stringify({
         model:"claude-sonnet-4-6",max_tokens:800,
         system:`You power the AI content engine for JFK Terminal 1 Experiential Space at Duty Free Americas. Generate personalized display content for departing travelers. Respond ONLY with valid JSON, no markdown: {greeting: string (welcome in local language + English in parentheses), language: string, brand: string (pick from: Dior/Givenchy/Hennessy/Moët/Bvlgari/Johnnie Walker/Jack Daniel's/Beluga/Kenzo/Flor de Caña/Lindt), activation: string (2 sentences — specific brand experience for this destination), cultural_moment: string (1 evocative sentence about destination), offer: string (exclusive TR offer), tagline: string (5-8 words, elegant)}`,
